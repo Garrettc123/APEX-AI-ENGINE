@@ -1,0 +1,88 @@
+version: '3.9'
+
+services:
+  web:
+    build: .
+    command: uvicorn apex.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+    networks:
+      - apex-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  worker:
+    build: .
+    command: celery -A apex.workers.celery_app worker --loglevel=info --concurrency=8 -Q scout,analyst,executor,monetizer,default
+    env_file: .env
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    networks:
+      - apex-net
+    restart: unless-stopped
+
+  beat:
+    build: .
+    command: celery -A apex.workers.celery_app beat --loglevel=info --scheduler redbeat.RedBeatScheduler
+    env_file: .env
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    networks:
+      - apex-net
+    restart: unless-stopped
+
+  flower:
+    build: .
+    command: celery -A apex.workers.celery_app flower --port=5555 --basic_auth=admin:apexadmin
+    ports:
+      - "5555:5555"
+    env_file: .env
+    depends_on:
+      - redis
+    networks:
+      - apex-net
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - apex-net
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: apex
+      POSTGRES_USER: apex
+      POSTGRES_PASSWORD: apexpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - apex-net
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  apex-net:
+    driver: bridge

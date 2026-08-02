@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚡ APEX — Garcar Enterprise</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --border: #1e1e2e;
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --accent3: #ff6b6b;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --success: #00d4aa;
+    --warning: #ffd93d;
+    --error: #ff6b6b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+  
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #0d0d1a 0%, #1a0d2e 50%, #0d1a2e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon { font-size: 32px; filter: drop-shadow(0 0 12px #6c63ff); }
+  .logo-text h1 { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #6c63ff, #00d4aa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .logo-text p { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .status-badge { display: flex; align-items: center; gap: 8px; background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.3); border-radius: 100px; padding: 8px 16px; font-size: 13px; color: var(--success); }
+  .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--success); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.85); } }
+
+  /* Layout */
+  .container { max-width: 1400px; margin: 0 auto; padding: 32px; }
+
+  /* Revenue Hero */
+  .revenue-hero {
+    background: linear-gradient(135deg, rgba(108,99,255,0.15) 0%, rgba(0,212,170,0.1) 100%);
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 20px;
+    padding: 40px;
+    margin-bottom: 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .revenue-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%; right: -20%;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(108,99,255,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .metric { display: flex; flex-direction: column; gap: 8px; }
+  .metric-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
+  .metric-value { font-size: 36px; font-weight: 800; background: linear-gradient(135deg, #fff, #a0a0c0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .metric-value.green { background: linear-gradient(135deg, #00d4aa, #00ff88); -webkit-background-clip: text; }
+  .metric-sub { font-size: 12px; color: var(--success); }
+
+  /* Agent Grid */
+  .section-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; }
+  .agents-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .agent-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    transition: all 0.3s;
+  }
+  .agent-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .agent-card.running { border-color: rgba(0,212,170,0.5); background: rgba(0,212,170,0.05); }
+  .agent-card.error { border-color: rgba(255,107,107,0.5); }
+  .agent-icon { font-size: 28px; margin-bottom: 12px; }
+  .agent-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .agent-state { font-size: 11px; padding: 3px 10px; border-radius: 100px; display: inline-block; font-weight: 600; }
+  .state-idle { background: rgba(107,107,138,0.2); color: var(--muted); }
+  .state-running { background: rgba(0,212,170,0.2); color: var(--success); }
+  .state-error { background: rgba(255,107,107,0.2); color: var(--error); }
+  .agent-stats { margin-top: 12px; display: flex; gap: 16px; }
+  .agent-stat { font-size: 12px; color: var(--muted); }
+  .agent-stat span { color: var(--text); font-weight: 600; }
+
+  /* Pipeline */
+  .pipeline {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+  .pipeline-flow { display: flex; align-items: center; gap: 0; margin-top: 16px; }
+  .pipeline-stage {
+    flex: 1;
+    text-align: center;
+    padding: 20px 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    position: relative;
+  }
+  .pipeline-arrow { color: var(--accent); font-size: 20px; padding: 0 8px; flex-shrink: 0; }
+  .stage-emoji { font-size: 24px; display: block; margin-bottom: 8px; }
+  .stage-name { font-size: 13px; font-weight: 700; }
+  .stage-count { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* Action Buttons */
+  .actions { display: flex; gap: 12px; margin-bottom: 32px; }
+  .btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary { background: linear-gradient(135deg, #6c63ff, #5a52e0); color: #fff; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(108,99,255,0.4); }
+  .btn-secondary { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text); }
+  .btn-success { background: linear-gradient(135deg, #00d4aa, #00b894); color: #000; font-weight: 800; }
+  .btn-success:hover { box-shadow: 0 8px 24px rgba(0,212,170,0.4); }
+
+  /* Log Feed */
+  .log-feed {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+  .log-entries { max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+  .log-entry { display: flex; gap: 12px; align-items: flex-start; font-size: 13px; padding: 8px 12px; border-radius: 8px; background: rgba(255,255,255,0.02); }
+  .log-time { color: var(--muted); font-size: 11px; white-space: nowrap; padding-top: 1px; }
+  .log-badge { font-size: 10px; padding: 2px 8px; border-radius: 100px; font-weight: 700; white-space: nowrap; }
+  .badge-scout { background: rgba(108,99,255,0.2); color: #a09af0; }
+  .badge-analyst { background: rgba(0,212,170,0.2); color: #00d4aa; }
+  .badge-executor { background: rgba(255,217,61,0.2); color: #ffd93d; }
+  .badge-monetizer { background: rgba(0,255,136,0.2); color: #00ff88; }
+  .badge-system { background: rgba(107,107,138,0.2); color: var(--muted); }
+  .log-msg { color: var(--text); flex: 1; }
+
+  /* Footer */
+  .footer { text-align: center; color: var(--muted); font-size: 12px; padding: 32px 0; }
+  .footer strong { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div class="logo-text">
+      <h1>APEX AI ENGINE</h1>
+      <p>Garcar Enterprise &nbsp;•&nbsp; Autonomous Commerce</p>
+    </div>
+  </div>
+  <div class="status-badge">
+    <div class="pulse"></div>
+    <span id="systemStatus">SYSTEM OPERATIONAL</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Revenue Metrics -->
+  <div class="revenue-hero">
+    <div class="metric">
+      <div class="metric-label">Total Revenue</div>
+      <div class="metric-value green" id="totalRevenue">$0.00</div>
+      <div class="metric-sub">↑ Autonomous pipeline</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Leads Discovered</div>
+      <div class="metric-value" id="leadsDiscovered">0</div>
+      <div class="metric-sub">Across all sources</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Deals Closed</div>
+      <div class="metric-value" id="dealsClosed">0</div>
+      <div class="metric-sub">Automated execution</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Cycles Run</div>
+      <div class="metric-value" id="cyclesRun">0</div>
+      <div class="metric-sub">Pipeline iterations</div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="actions">
+    <button class="btn btn-primary" onclick="triggerPipeline()">⚡ Trigger Pipeline</button>
+    <button class="btn btn-success" onclick="openDocs()">📡 API Docs</button>
+    <button class="btn btn-secondary" onclick="refreshMetrics()">🔄 Refresh</button>
+    <button class="btn btn-secondary" onclick="openFlower()">🌸 Task Monitor</button>
+  </div>
+
+  <!-- Agent Status Grid -->
+  <p class="section-title">Agent Network</p>
+  <div class="agents-grid" id="agentGrid">
+    <div class="agent-card" id="agent-scout">
+      <div class="agent-icon">🔭</div>
+      <div class="agent-name">Scout Agent</div>
+      <span class="agent-state state-idle">idle</span>
+      <div class="agent-stats">
+        <div class="agent-stat">Runs: <span id="scout-runs">0</span></div>
+        <div class="agent-stat">Errors: <span id="scout-errors">0</span></div>
+      </div>
+    </div>
+    <div class="agent-card" id="agent-analyst">
+      <div class="agent-icon">🧠</div>
+      <div class="agent-name">Analyst Agent</div>
+      <span class="agent-state state-idle">idle</span>
+      <div class="agent-stats">
+        <div class="agent-stat">Runs: <span id="analyst-runs">0</span></div>
+        <div class="agent-stat">Errors: <span id="analyst-errors">0</span></div>
+      </div>
+    </div>
+    <div class="agent-card" id="agent-executor">
+      <div class="agent-icon">⚙️</div>
+      <div class="agent-name">Executor Agent</div>
+      <span class="agent-state state-idle">idle</span>
+      <div class="agent-stats">
+        <div class="agent-stat">Runs: <span id="executor-runs">0</span></div>
+        <div class="agent-stat">Errors: <span id="executor-errors">0</span></div>
+      </div>
+    </div>
+    <div class="agent-card" id="agent-monetizer">
+      <div class="agent-icon">💰</div>
+      <div class="agent-name">Monetizer Agent</div>
+      <span class="agent-state state-idle">idle</span>
+      <div class="agent-stats">
+        <div class="agent-stat">Runs: <span id="monetizer-runs">0</span></div>
+        <div class="agent-stat">Errors: <span id="monetizer-errors">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pipeline Flow -->
+  <div class="pipeline">
+    <p class="section-title">Pipeline Flow</p>
+    <div class="pipeline-flow">
+      <div class="pipeline-stage">
+        <span class="stage-emoji">🔭</span>
+        <div class="stage-name">SCOUT</div>
+        <div class="stage-count">Discover</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-stage">
+        <span class="stage-emoji">🧠</span>
+        <div class="stage-name">ANALYST</div>
+        <div class="stage-count">Qualify</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-stage">
+        <span class="stage-emoji">⚙️</span>
+        <div class="stage-name">EXECUTOR</div>
+        <div class="stage-count">Execute</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-stage">
+        <span class="stage-emoji">💰</span>
+        <div class="stage-name">MONETIZER</div>
+        <div class="stage-count">Revenue</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Log Feed -->
+  <div class="log-feed">
+    <p class="section-title">Live Agent Feed</p>
+    <div class="log-entries" id="logFeed">
+      <div class="log-entry">
+        <span class="log-time" id="initTime"></span>
+        <span class="log-badge badge-system">SYSTEM</span>
+        <span class="log-msg">⚡ APEX Engine initialized — Garcar Enterprise autonomous pipeline active</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <strong>APEX AI ENGINE v1.0</strong> &nbsp;•&nbsp; Garcar Enterprise &nbsp;•&nbsp; Garrett Carrol &nbsp;•&nbsp; Built 2026
+</div>
+
+<script>
+  // Set init time
+  document.getElementById('initTime').textContent = new Date().toLocaleTimeString();
+
+  // WebSocket — Revenue Stream
+  let ws;
+  function connectWS() {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${proto}://${location.host}/ws/revenue`);
+    ws.onmessage = (e) => {
+      const d = JSON.parse(e.data);
+      if (d.type === 'revenue_snapshot') {
+        document.getElementById('totalRevenue').textContent = '$' + (d.total_revenue || 0).toLocaleString('en-US', {minimumFractionDigits:2});
+        document.getElementById('leadsDiscovered').textContent = (d.leads_discovered || 0).toLocaleString();
+        document.getElementById('dealsClosed').textContent = (d.deals_closed || 0).toLocaleString();
+        document.getElementById('cyclesRun').textContent = (d.cycles_completed || 0).toLocaleString();
+      }
+    };
+    ws.onclose = () => setTimeout(connectWS, 3000);
+    ws.onerror = () => ws.close();
+  }
+  connectWS();
+
+  // Fetch agent statuses
+  async function refreshMetrics() {
+    try {
+      const r = await fetch('/api/v1/agents/status');
+      const d = await r.json();
+      (d.agents || []).forEach(agent => {
+        const key = agent.name.replace('Agent','').toLowerCase();
+        const card = document.getElementById(`agent-${key}`);
+        if (card) {
+          const badge = card.querySelector('.agent-state');
+          badge.textContent = agent.state;
+          badge.className = `agent-state state-${agent.state}`;
+          const runs = card.querySelector(`#${key}-runs`);
+          const errs = card.querySelector(`#${key}-errors`);
+          if (runs) runs.textContent = agent.run_count;
+          if (errs) errs.textContent = agent.error_count;
+          if (agent.state === 'running') card.classList.add('running');
+          else { card.classList.remove('running'); card.classList.remove('error'); }
+          if (agent.state === 'error') card.classList.add('error');
+        }
+      });
+    } catch(e) { console.error(e); }
+  }
+  setInterval(refreshMetrics, 5000);
+  refreshMetrics();
+
+  // Trigger pipeline
+  async function triggerPipeline() {
+    try {
+      const r = await fetch('/api/v1/agents/trigger', {method:'POST'});
+      const d = await r.json();
+      addLog('SYSTEM', `Pipeline triggered: ${d.message || d.status}`, 'system');
+    } catch(e) { addLog('SYSTEM', 'Trigger failed — check auth', 'system'); }
+  }
+
+  function addLog(agent, msg, type='system') {
+    const feed = document.getElementById('logFeed');
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    entry.innerHTML = `
+      <span class="log-time">${new Date().toLocaleTimeString()}</span>
+      <span class="log-badge badge-${type}">${agent.toUpperCase()}</span>
+      <span class="log-msg">${msg}</span>
+    `;
+    feed.insertBefore(entry, feed.firstChild);
+    if (feed.children.length > 50) feed.removeChild(feed.lastChild);
+  }
+
+  function openDocs() { window.open('/docs', '_blank'); }
+  function openFlower() { window.open('http://localhost:5555', '_blank'); }
+</script>
+</body>
+</html>
