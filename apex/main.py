@@ -3,6 +3,9 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
+from collections import deque
+from datetime import datetime, timezone
+from typing import Any
 import structlog
 import orjson
 
@@ -16,6 +19,23 @@ from apex.monitoring.metrics import setup_metrics
 log = structlog.get_logger()
 manager = ConnectionManager()
 orchestrator = ApexOrchestrator()
+
+SYSTEM = "APEX-AI-ENGINE"
+ROLE = "commerce_engine"
+VERSION = "1.0.0"
+CONTRACT_VERSION = "1.0.0"
+
+_events: deque[dict[str, Any]] = deque(maxlen=1000)
+_counters: dict[str, int] = {
+    "requests_total": 0,
+    "health_checks": 0,
+    "meta_checks": 0,
+    "events_checks": 0,
+}
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 @asynccontextmanager
@@ -31,7 +51,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="APEX AI Engine",
     description="Autonomous Profit & Enterprise eXecution Engine — Garcar Enterprise",
-    version="1.0.0",
+    version=VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
@@ -46,7 +66,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Metrics
+# Metrics (Prometheus text at /metrics — Garcar Base Contract accepts this)
 setup_metrics(app)
 
 # Routers
@@ -55,7 +75,45 @@ app.include_router(api_router, prefix="/api/v1")
 
 @app.get("/health")
 async def health():
-    return {"status": "operational", "engine": "APEX", "version": "1.0.0", "company": "Garcar Enterprise"}
+    _counters["health_checks"] += 1
+    _counters["requests_total"] += 1
+    return {
+        "status": "operational",
+        "system": SYSTEM,
+        "version": VERSION,
+        "timestamp": _now(),
+        "engine": "APEX",
+        "company": "Garcar Enterprise",
+    }
+
+
+@app.get("/meta")
+async def meta():
+    """Garcar Base Contract discovery endpoint."""
+    _counters["meta_checks"] += 1
+    _counters["requests_total"] += 1
+    return {
+        "system": SYSTEM,
+        "role": ROLE,
+        "contract_version": CONTRACT_VERSION,
+        "endpoints": ["/health", "/meta", "/metrics", "/events"],
+        "event_bus_topic_schema": "garcar.{system}.{event_type}",
+    }
+
+
+@app.get("/events")
+async def events():
+    """In-memory event ring until external bus is wired."""
+    _counters["events_checks"] += 1
+    _counters["requests_total"] += 1
+    ev = list(_events)
+    return {"events": ev, "total": len(ev)}
+
+
+@app.get("/contract/metrics")
+async def contract_metrics_json():
+    """JSON counters companion to Prometheus /metrics."""
+    return dict(_counters)
 
 
 @app.get("/", response_class=HTMLResponse)
