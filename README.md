@@ -111,3 +111,15 @@ Workers start via real modules: `python -m apex.workers.{scout,analyst,executor,
 
 Proprietary — Garcar Enterprise © 2026. All rights reserved.  
 Contact: [github.com/Garrettc123](https://github.com/Garrettc123)
+
+
+## Nested Docker / local agent hosts
+
+If containers cannot TCP to `db:5432` (common on nested Docker), set in `.env`:
+
+```bash
+DATABASE_URL=sqlite+aiosqlite:///./apex.db
+```
+
+API startup is soft-fail on DB init so `/health` still comes up. Prefer Postgres when bridge networking works.
+
