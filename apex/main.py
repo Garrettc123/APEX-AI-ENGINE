@@ -41,10 +41,19 @@ def _now() -> str:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     log.info("apex.startup", version="1.0.0", company="Garcar Enterprise")
-    await init_db()
-    await orchestrator.start()
+    try:
+        await init_db()
+    except Exception as exc:
+        log.error("apex.db_init_skipped", error=str(exc))
+    try:
+        await orchestrator.start()
+    except Exception as exc:
+        log.error("apex.orchestrator_start_failed", error=str(exc))
     yield
-    await orchestrator.shutdown()
+    try:
+        await orchestrator.shutdown()
+    except Exception:
+        pass
     log.info("apex.shutdown")
 
 

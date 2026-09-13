@@ -45,7 +45,7 @@ APEX is an **unprecedented neuro-symbolic multi-agent AI system** that fuses:
          ↕ Supabase PostgreSQL + Realtime ↕
 ┌─────────────────────────────────────────────────────────────────┐
 │                    DEPLOYMENT (Railway)                          │
-│  - Docker Compose (web + worker + redis + beat)                 │
+│  - Docker Compose (db + redis + api + 4 role workers)           │
 │  - GitHub Actions CI/CD                                         │
 │  - Auto-scaling worker pool                                     │
 └─────────────────────────────────────────────────────────────────┘
@@ -53,19 +53,32 @@ APEX is an **unprecedented neuro-symbolic multi-agent AI system** that fuses:
 
 ---
 
-## 🚀 Quick Start
+## 🛠️ Build & Run
+
+Aligned to the Garcar APEX stack build guide (7 Compose services: `db`, `redis`, `api`, `worker-scout`, `worker-analyst`, `worker-executor`, `worker-monetizer`).
 
 ```bash
 git clone https://github.com/Garrettc123/APEX-AI-ENGINE
 cd APEX-AI-ENGINE
 cp .env.example .env
-# Fill in your keys in .env
-docker-compose up --build
+# Fill in your keys in .env (placeholders only in the example)
+
+docker compose up --build
 ```
 
-Dashboard: http://localhost:8000  
-API Docs: http://localhost:8000/docs  
-Agent Monitor: http://localhost:8000/agents
+Verify:
+
+```bash
+curl http://localhost:8000/health
+```
+
+- API docs: http://localhost:8000/docs  
+- Dashboard: http://localhost:8000  
+- ReDoc: http://localhost:8000/redoc  
+
+Workers start via real modules: `python -m apex.workers.{scout,analyst,executor,monetizer}` (Celery consumers on role queues).
+
+> **CASH_LOCK:** do not deploy this stack to Railway from an unapproved PR. Local compose only until cash unlock.
 
 ---
 
@@ -85,7 +98,7 @@ Agent Monitor: http://localhost:8000/agents
 
 - **Backend:** Python 3.11 + FastAPI
 - **Workers:** Celery 5 + Redis
-- **Database:** Supabase (PostgreSQL 15)
+- **Database:** Postgres 16 (Compose) / Supabase (cloud)
 - **Payments:** Stripe SDK
 - **AI:** OpenAI GPT-4o + LangChain
 - **Deploy:** Railway + Docker
@@ -98,3 +111,15 @@ Agent Monitor: http://localhost:8000/agents
 
 Proprietary — Garcar Enterprise © 2026. All rights reserved.  
 Contact: [github.com/Garrettc123](https://github.com/Garrettc123)
+
+
+## Nested Docker / local agent hosts
+
+If containers cannot TCP to `db:5432` (common on nested Docker), set in `.env`:
+
+```bash
+DATABASE_URL=sqlite+aiosqlite:///./apex.db
+```
+
+API startup is soft-fail on DB init so `/health` still comes up. Prefer Postgres when bridge networking works.
+

@@ -2,11 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# System deps
-RUN apt-get update && apt-get install -y \
+# System deps (curl for api healthcheck; procps for worker pgrep healthchecks; libpq for DB)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gcc \
     libpq-dev \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # Python deps
@@ -17,8 +18,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create non-root user
-RUN adduser --disabled-password --gecos '' apexuser
-RUN chown -R apexuser:apexuser /app
+RUN adduser --disabled-password --gecos '' apexuser \
+    && chown -R apexuser:apexuser /app
 USER apexuser
 
 EXPOSE 8000

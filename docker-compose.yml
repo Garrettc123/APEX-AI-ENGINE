@@ -1,88 +1,102 @@
-version: '3.9'
-
 services:
-  web:
-    build: .
-    command: uvicorn apex.main:app --host 0.0.0.0 --port 8000 --reload
-    ports:
-      - "8000:8000"
-    env_file: .env
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: apex
+      POSTGRES_PASSWORD: apex
+      POSTGRES_DB: apex
     volumes:
-      - .:/app
-    depends_on:
-      - redis
-      - db
-    networks:
-      - apex-net
-    restart: unless-stopped
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  worker:
-    build: .
-    command: celery -A apex.workers.celery_app worker --loglevel=info --concurrency=8 -Q scout,analyst,executor,monetizer,default
-    env_file: .env
-    volumes:
-      - .:/app
-    depends_on:
-      - redis
-    networks:
-      - apex-net
-    restart: unless-stopped
-
-  beat:
-    build: .
-    command: celery -A apex.workers.celery_app beat --loglevel=info --scheduler redbeat.RedBeatScheduler
-    env_file: .env
-    volumes:
-      - .:/app
-    depends_on:
-      - redis
-    networks:
-      - apex-net
-    restart: unless-stopped
-
-  flower:
-    build: .
-    command: celery -A apex.workers.celery_app flower --port=5555 --basic_auth=admin:apexadmin
-    ports:
-      - "5555:5555"
-    env_file: .env
-    depends_on:
-      - redis
-    networks:
-      - apex-net
-    restart: unless-stopped
+      test: ["CMD-SHELL", "pg_isready -U apex"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    networks:
-      - apex-net
-    restart: unless-stopped
-    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
-
-  db:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_DB: apex
-      POSTGRES_USER: apex
-      POSTGRES_PASSWORD: apexpassword
-    ports:
-      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - apex-net
-    restart: unless-stopped
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build: .
+    command: uvicorn apex.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    environment:
+      # Prefer Postgres when bridge networking works; override via .env for nested Docker (sqlite).
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://apex:apex@db:5432/apex}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
+
+  worker-scout:
+    build: .
+    command: python -m apex.workers.scout
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://apex:apex@db:5432/apex}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker-analyst:
+    build: .
+    command: python -m apex.workers.analyst
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://apex:apex@db:5432/apex}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker-executor:
+    build: .
+    command: python -m apex.workers.executor
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://apex:apex@db:5432/apex}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker-monetizer:
+    build: .
+    command: python -m apex.workers.monetizer
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://apex:apex@db:5432/apex}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   postgres_data:
-
-networks:
-  apex-net:
-    driver: bridge
+  redis_data:
