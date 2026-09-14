@@ -10,6 +10,8 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/apex
+  OIDC_AUDIENCE: garcar-supabase-production
+  OIDC_VERIFY_URL: https://sqnckbvdqofoirgtwwxt.supabase.co/functions/v1/github-oidc-verify
 
 jobs:
   test:
@@ -42,8 +44,76 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Request GitHub OIDC token
+        id: oidc
+        run: |
+          set -euo pipefail
+          REQUEST_URL="${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${OIDC_AUDIENCE}"
+          TOKEN="$(curl -fsSL \
+            -H "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            -H "Accept: application/json; api-version=2.0" \
+            "${REQUEST_URL}" | jq -r '.value')"
+          if [ -z "${TOKEN}" ] || [ "${TOKEN}" = "null" ]; then
+            echo "Failed to obtain GitHub OIDC token" >&2
+            exit 1
+          fi
+          echo "::add-mask::${TOKEN}"
+          {
+            echo "token<<EOF"
+            echo "${TOKEN}"
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Verify deploy identity with github-oidc-verify
+        env:
+          OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
+          INTERNAL_AUTH: ${{ secrets.GARCAR_INTERNAL_AUTH }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${INTERNAL_AUTH}" ]; then
+            echo "Missing secret GARCAR_INTERNAL_AUTH on environment production" >&2
+            exit 1
+          fi
+          BODY_FILE="$(mktemp)"
+          jq -n --arg token "${OIDC_TOKEN}" '{token: $token}' > "${BODY_FILE}"
+          HTTP_CODE="$(curl -sS -o /tmp/oidc-verify.json -w "%{http_code}" \
+            -X POST "${OIDC_VERIFY_URL}" \
+            -H "Content-Type: application/json" \
+            -H "X-Internal-Auth: ${INTERNAL_AUTH}" \
+            -H "apikey: ${SUPABASE_PUBLISHABLE_KEY}" \
+            --data-binary @"${BODY_FILE}")"
+          rm -f "${BODY_FILE}"
+          echo "github-oidc-verify HTTP ${HTTP_CODE}"
+          python3 - "${HTTP_CODE}" <<'PY'
+          import json, sys
+          code = sys.argv[1]
+          try:
+              payload = json.load(open("/tmp/oidc-verify.json"))
+          except Exception:
+              print("github-oidc-verify returned non-JSON body", file=sys.stderr)
+              sys.exit(1)
+          safe = {k: payload.get(k) for k in ("verified", "repository", "ref", "environment", "error", "reason") if k in payload}
+          print(json.dumps(safe, sort_keys=True))
+          if code != "200" or payload.get("verified") is not True:
+              sys.exit(1)
+          if payload.get("repository") != "Garrettc123/APEX-AI-ENGINE":
+              print("repository mismatch", file=sys.stderr)
+              sys.exit(1)
+          if payload.get("ref") != "refs/heads/main":
+              print("ref mismatch", file=sys.stderr)
+              sys.exit(1)
+          if payload.get("environment") != "production":
+              print("environment mismatch", file=sys.stderr)
+              sys.exit(1)
+          PY
 
       - name: Install Railway CLI
         run: npm install -g @railway/cli
