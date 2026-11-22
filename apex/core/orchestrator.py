@@ -67,28 +67,17 @@ class ApexOrchestrator:
 
         if not opportunities:
             log.info("pipeline.no_opportunities", cycle_id=cycle_id)
-            return
 
-        # Stage 2: Analyst qualifies and scores
-        qualified = await self.analyst.qualify(opportunities=opportunities, cycle_id=cycle_id)
+        # A research candidate does not qualify as a sale or an approved outreach action.
+        qualified = await self.analyst.qualify(opportunities=opportunities, cycle_id=cycle_id) if opportunities else []
         log.info("analyst.done", qualified=len(qualified), cycle_id=cycle_id)
-
-        if not qualified:
-            return
-
-        # Stage 3: Executor initiates outreach / action
-        actions = await self.executor.execute(leads=qualified, cycle_id=cycle_id)
-        log.info("executor.done", actions=len(actions), cycle_id=cycle_id)
-
-        # Stage 4: Monetizer handles payments / invoicing
+        actions = await self.executor.execute(leads=qualified, cycle_id=cycle_id) if qualified else []
         revenue = await self.monetizer.monetize(actions=actions, cycle_id=cycle_id)
-        log.info("monetizer.done", revenue=revenue, cycle_id=cycle_id)
-
         self.metrics.record_cycle(
             cycle_id=cycle_id,
             opportunities=len(opportunities),
             qualified=len(qualified),
-            actions=len(actions),
+            actions=0,  # No deals are closed by research/draft preparation.
             revenue=revenue,
         )
 
