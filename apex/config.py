@@ -36,9 +36,9 @@ class Settings(BaseSettings):
     STRIPE_PRICE_ID_PRO: str = ""
     STRIPE_PRICE_ID_ENTERPRISE: str = ""
 
-    # MARS API
-    MARS_API_KEY: str = ""
-    MARS_API_URL: str = "https://api.marsrealty.io/v1"
+    # Real-estate Scout ingests bounded public research from APEX_PROPERTY_FEED_PATH;
+    # Garcar MARS is a reasoning API, not a listing feed.
+    APEX_PROPERTY_FEED_PATH: str = ""
 
     # Webhooks
     WEBHOOK_SECRET: str = ""
