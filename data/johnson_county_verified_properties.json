@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "region": "Cleburne / Johnson County, Texas, USA",
+  "reviewed_on": "2026-11-22",
+  "research_only": true,
+  "disclosure": "Public listing research only. No seller authorization, contract rights, buyer acceptance, proof of funds, title, assignable deal, or profit is established. Buyer match describes published criteria, not a purchase commitment.",
+  "properties": [
+    {
+      "id": "NTREIS-21399422",
+      "address": "602 Trinity St, Cleburne, TX 76031, USA",
+      "kind": "vacant_land",
+      "status": "active_as_reported",
+      "asking_price_usd": 54900,
+      "acres": 0.523,
+      "occupancy": "not_applicable_land",
+      "listing_url": "https://www.realtor.com/realestateandhomes-detail/602-Trinity-St_Cleburne_TX_76031_M87680-38411",
+      "reviewed_on": "2026-11-22",
+      "buyer_candidate": {
+        "name": "RAW Land & Home",
+        "criteria_url": "https://rawlandandhome.com/land/criteria",
+        "match_status": "partial_published_criteria",
+        "matches": [
+          "Johnson County",
+          ">=0.5 acres",
+          "infill lot category",
+          "assignable-contract channel published"
+        ],
+        "unverified": [
+          "buyer_interest",
+          "offer_price",
+          "access",
+          "utilities",
+          "zoning",
+          "title",
+          "restrictions",
+          "assignment_permission"
+        ]
+      },
+      "notes": "Listing says 0.523 acres, cleared, no HOA, but deed restrictions. Asking price is not acquisition margin."
+    },
+    {
+      "id": "MLS-48446810",
+      "address": "7112 S Aberdeen Dr, Cleburne, TX 76033, USA",
+      "kind": "vacant_land",
+      "status": "active_as_reported",
+      "asking_price_usd": 17500,
+      "acres": 0.2927,
+      "occupancy": "not_applicable_land",
+      "listing_url": "https://www.coldwellbankerhomes.com/tx/cleburne/7112-s-aberdeen-dr/pid_74832472/",
+      "reviewed_on": "2026-11-22",
+      "buyer_candidate": null,
+      "exclusion": "Below RAW Land & Home's published 0.5 acre minimum; needs a different buyer buy-box.",
+      "notes": "Retreat subdivision: HOA dues, access, and build rules require verification."
+    },
+    {
+      "id": "NTREIS-21311991",
+      "address": "833 Carmela Ct, Cleburne, TX 76031, USA",
+      "kind": "house_rehab_candidate",
+      "status": "active_as_reported",
+      "asking_price_usd": 160000,
+      "acres": 2,
+      "occupancy": "unknown",
+      "listing_url": "https://www.realtor.com/realestateandhomes-detail/833-Carmela-Ct_Cleburne_TX_76031_M81969-45547",
+      "reviewed_on": "2026-11-22",
+      "buyer_candidate": {
+        "name": "BEVA Homes",
+        "criteria_url": "https://www.bevahomes.com/we-buy-land-cleburne-tx",
+        "match_status": "unverified_candidate",
+        "matches": [
+          "As-is homes/land published service category in Cleburne"
+        ],
+        "unverified": [
+          "actual_buy_box",
+          "buyer_interest",
+          "offer_price",
+          "property_condition",
+          "occupancy",
+          "title"
+        ]
+      },
+      "notes": "Advertised fixer-upper on two acres; NOT VERIFIED VACANT."
+    },
+    {
+      "id": "NTREIS-21419779",
+      "address": "307 N Douglas Ave, Cleburne, TX 76033, USA",
+      "kind": "house_rehab_candidate",
+      "status": "active_as_reported",
+      "asking_price_usd": 160000,
+      "acres": 0.24,
+      "occupancy": "unknown",
+      "listing_url": "https://www.coldwellbankerhomes.com/tx/cleburne/307-n-douglas-ave/pid_74492767/",
+      "reviewed_on": "2026-11-22",
+      "buyer_candidate": {
+        "name": "New Age House Buying",
+        "criteria_url": "https://www.newagehousebuying.com/",
+        "match_status": "unverified_candidate",
+        "matches": [
+          "As-is / distressed house purchase category in the area"
+        ],
+        "unverified": [
+          "actual_buy_box",
+          "buyer_interest",
+          "offer_price",
+          "repairs",
+          "occupancy",
+          "title"
+        ]
+      },
+      "notes": "Advertised renovation/TLC candidate; NOT VERIFIED VACANT."
+    }
+  ]
+}

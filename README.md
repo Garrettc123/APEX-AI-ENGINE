@@ -1,7 +1,7 @@
 # ⚡ APEX — Autonomous Profit & Enterprise eXecution Engine
 
 > **Garcar Enterprise | Built by Garrett Carrol**  
-> The world's first self-orchestrating, revenue-generating AI commerce engine designed to autonomously discover opportunities, qualify leads, execute deals, and route payments — with zero human intervention.
+> Experimental multi-agent research and workflow prototype. It is not independently certified for unattended commercial execution, real-estate brokerage, production payments, or revenue.
 
 ---
 
@@ -11,8 +11,8 @@ APEX is an **unprecedented neuro-symbolic multi-agent AI system** that fuses:
 
 - **LLM Reasoning Agents** (OpenAI GPT-4o / local Ollama fallback)
 - **Autonomous Web Intelligence** (scraping, crawling, market scanning)
-- **Real Estate Automation Pipeline** (MARS API integration)
-- **Stripe Payment Infrastructure** (automated invoicing, checkout, subscription)
+- **Real Estate Research Pipeline** (locally verified public listing feed; no mocked properties)
+- **Stripe Integration Scaffolding** (payments disabled in the autonomous worker pending separate authorization and settlement verification)
 - **Swarm Task Orchestration** (parallel agent workers via Celery + Redis)
 - **Live Dashboard** (FastAPI + WebSocket real-time UI)
 - **Webhook Event Bus** (GitHub, Stripe, Linear, Notion)
@@ -86,13 +86,30 @@ Workers start via real modules: `python -m apex.workers.{scout,analyst,executor,
 
 | Stream | Mechanism | Automated? |
 |--------|-----------|------------|
-| SaaS Subscriptions | Stripe Billing | ✅ Full |
-| Lead Generation Sales | Agent outreach → Stripe invoice | ✅ Full |
-| Real Estate Deal Pipeline | MARS API → CRM → Close | ✅ Full |
-| API Access Licensing | API key gating + usage metering | ✅ Full |
-| White-label Resale | Multi-tenant isolation | ✅ Full |
+| SaaS Subscriptions | Stripe Billing concept; execution requires a separate approved integration | No |
+| Lead Generation Sales | Research-only candidate queue; outbound requires approval | No |
+| Real Estate Deal Pipeline | Verified public property research → buy-box screening → operator review | Research only |
+| API Access Licensing | Prototype service interfaces; production billing not verified | Unverified |
+| White-label Resale | Proposed custom deployment scope | Unverified |
 
 ---
+
+
+## Source-backed Cleburne property research (November 22, 2026)
+
+The prior Scout created dummy properties, fictitious public records and synthetic market signals. The prior Analyst assigned random scores and dollar values; the prior Monetizer counted unsent/unpaid invoices as revenue. **Those behaviors are removed on this branch.**
+
+- Research file: [data/johnson_county_verified_properties.json](data/johnson_county_verified_properties.json)
+- Buyer-property matching notes: [docs/johnson_county_property_match_2026-11-22.md](docs/johnson_county_property_match_2026-11-22.md)
+- Evidence loader: `apex/agents/property_feed.py` (rejects stale listings after seven days)
+- Read-only export: `python -m scripts.property_research_report --json`
+- Tests: `python -m unittest discover -s tests -p 'test_verified_property_feed.py'` plus `pytest -q tests/test_health.py`
+- Nothing is sent to property owners, investors, CRMs or Stripe. No seller has authorized a transaction; no investor has accepted a deal; no deal profit is established.
+- Buyer fit is an *initial published-criteria match*, not proof of funds or a final offer.
+
+### Release gate
+
+This repository branch is draft-only and not deployed. A distinct, audited approval-bound module is required before any outreach, contract, listing marketing, invoice, or deployment. Source refresh is manual until a legitimate property-feed adapter and its permissions are reviewed.
 
 ## 📦 Stack
 
